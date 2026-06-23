@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hərəkət Animasiyası</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-base: #06060c;
+            --text-primary: #f1f3f9;
+            --text-secondary: #949aab;
+            --accent-color: #00f2fe;
+            --glass-bg: rgba(13, 14, 27, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-glow: rgba(0, 242, 254, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            font-family: 'Outfit', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        #mathCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            display: block;
+        }
+
+        /* UI Overlays */
+        .ui-overlay {
+            position: absolute;
+            z-index: 10;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 24px;
+        }
+
+        .glass-panel {
+            pointer-events: auto;
+            background: var(--glass-bg);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .glass-panel:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), 0 0 15px var(--glass-glow);
+        }
+
+        header.glass-panel {
+            align-self: flex-start;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 14px 24px;
+        }
+
+        .logo-icon {
+            font-size: 28px;
+            color: var(--accent-color);
+            text-shadow: 0 0 10px var(--accent-color);
+        }
+
+        h1 {
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .subtitle {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Controls Panel */
+        .controls-panel {
+            position: absolute;
+            right: 24px;
+            top: 24px;
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .controls-panel h2 {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 8px;
+        }
+
+        .info-text {
+            font-size: 11px;
+            line-height: 1.5;
+            color: var(--text-secondary);
+            background: rgba(0, 0, 0, 0.15);
+            padding: 10px;
+            border-radius: 8px;
+            border-left: 3px solid var(--accent-color);
+        }
+
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+
+        .val-display {
+            font-family: monospace;
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            cursor: pointer;
+            box-shadow: 0 0 8px var(--accent-color);
+            transition: transform 0.1s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.25);
+        }
+
+        .back-btn {
+            text-decoration: none;
+            color: var(--text-primary);
+            font-size: 12px;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            transition: all 0.3s;
+            display: inline-block;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .back-btn:hover {
+            background: var(--accent-color);
+            color: var(--bg-base);
+            box-shadow: 0 0 10px var(--accent-color);
+        }
+
+        footer.glass-panel {
+            align-self: flex-start;
+            padding: 8px 16px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 768px) {
+            .ui-overlay {
+                display: flex;
+                flex-direction: column;
+                overflow-y: auto;
+                pointer-events: auto;
+                gap: 15px;
+            }
+            .controls-panel {
+                position: static;
+                width: 100%;
+            }
+            header.glass-panel {
+                width: 100%;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="mathCanvas"></canvas>
+
+    <div class="ui-overlay">
+        <!-- Header -->
+        <header class="glass-panel">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span class="logo-icon">🚀</span>
+                <div>
+                    <h1>Hərəkət Animasiyası</h1>
+                    <p class="subtitle">Smooth Particle Follower</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Controls -->
+        <aside class="glass-panel controls-panel">
+            <h2>Parametrlər</h2>
+            <div class="info-text">
+                Obyektlərin siçan və ya toxunuş mövqeyinə doğru yumşaq və axıcı şəkildə hərəkət etdirilməsi.
+            </div>
+
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span>Axıcılıq (Həssaslıq)</span>
+                    <span class="val-display" id="val-lerp">0.05</span>
+                </div>
+                <input type="range" id="param-lerp" min="0.01" max="0.3" step="0.01" value="0.05">
+            </div>
+
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span>Hissəcik Sayı</span>
+                    <span class="val-display" id="val-trail">15</span>
+                </div>
+                <input type="range" id="param-trail" min="5" max="50" step="1" value="15">
+            </div>
+
+            <a href="index.html" class="back-btn">← Portala Qayıt</a>
+        </aside>
+
+        <!-- Footer Help -->
+        <footer class="glass-panel">
+            <span>💡 Siçanı ekranda hərəkət etdirərək hissəciklərin axıcı hərəkətini izləyin.</span>
+        </footer>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('mathCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const state = {
+            width: window.innerWidth,
+            height: window.innerHeight,
+            target: { x: window.innerWidth / 2, y: window.innerHeight / 2 },
+            trail: []
+        };
+
+        function getSliderVal(id) {
+            return parseFloat(document.getElementById(id).value);
+        }
+
+        function setupSlider(sliderId, displayId) {
+            const slider = document.getElementById(sliderId);
+            const display = document.getElementById(displayId);
+            slider.addEventListener('input', () => {
+                display.textContent = slider.value;
+            });
+        }
+
+        setupSlider('param-lerp', 'val-lerp');
+        setupSlider('param-trail', 'val-trail');
+
+        function resize() {
+            const dpr = window.devicePixelRatio || 1;
+            state.width = window.innerWidth;
+            state.height = window.innerHeight;
+            canvas.width = state.width * dpr;
+            canvas.height = state.height * dpr;
+            ctx.scale(dpr, dpr);
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // Mouse listeners
+        window.addEventListener('mousemove', (e) => {
+            state.target.x = e.clientX;
+            state.target.y = e.clientY;
+        });
+
+        window.addEventListener('touchmove', (e) => {
+            if (e.touches.length > 0) {
+                state.target.x = e.touches[0].clientX;
+                state.target.y = e.touches[0].clientY;
+            }
+        });
+
+        // Initialize trail points
+        const startX = window.innerWidth / 2;
+        const startY = window.innerHeight / 2;
+        for (let i = 0; i < 50; i++) {
+            state.trail.push({ x: startX, y: startY });
+        }
+
+        function draw() {
+            ctx.fillStyle = 'rgba(6, 6, 12, 0.2)';
+            ctx.fillRect(0, 0, state.width, state.height);
+
+            const lerpSpeed = getSliderVal('param-lerp');
+            const trailCount = getSliderVal('param-trail');
+
+            // Lerp trail points
+            // First point follows target
+            state.trail[0].x += (state.target.x - state.trail[0].x) * lerpSpeed;
+            state.trail[0].y += (state.target.y - state.trail[0].y) * lerpSpeed;
+
+            // Rest follow previous point
+            for (let i = 1; i < trailCount; i++) {
+                state.trail[i].x += (state.trail[i - 1].x - state.trail[i].x) * 0.3;
+                state.trail[i].y += (state.trail[i - 1].y - state.trail[i].y) * 0.3;
+            }
+
+            // Draw connecting glow path
+            ctx.beginPath();
+            ctx.moveTo(state.trail[0].x, state.trail[0].y);
+            for (let i = 1; i < trailCount; i++) {
+                ctx.lineTo(state.trail[i].x, state.trail[i].y);
+            }
+            ctx.strokeStyle = 'rgba(0, 242, 254, 0.15)';
+            ctx.lineWidth = 15;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+
+            // Draw main path
+            ctx.beginPath();
+            ctx.moveTo(state.trail[0].x, state.trail[0].y);
+            for (let i = 1; i < trailCount; i++) {
+                ctx.lineTo(state.trail[i].x, state.trail[i].y);
+            }
+            ctx.strokeStyle = '#00f2fe';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            // Draw glowing node dots
+            for (let i = 0; i < trailCount; i++) {
+                const ratio = 1 - (i / trailCount);
+                ctx.beginPath();
+                ctx.arc(state.trail[i].x, state.trail[i].y, 8 * ratio, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(0, 242, 254, ${ratio})`;
+                ctx.fill();
+            }
+
+            requestAnimationFrame(draw);
+        }
+
+        draw();
+    </script>
+</body>
+</html>

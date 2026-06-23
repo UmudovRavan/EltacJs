@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fırlanma Animasiyası</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-base: #06060c;
+            --text-primary: #f1f3f9;
+            --text-secondary: #949aab;
+            --accent-color: #ff0844;
+            --glass-bg: rgba(13, 14, 27, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-glow: rgba(255, 8, 68, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            font-family: 'Outfit', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        #mathCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            display: block;
+        }
+
+        /* UI Overlays */
+        .ui-overlay {
+            position: absolute;
+            z-index: 10;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 24px;
+        }
+
+        .glass-panel {
+            pointer-events: auto;
+            background: var(--glass-bg);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .glass-panel:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), 0 0 15px var(--glass-glow);
+        }
+
+        header.glass-panel {
+            align-self: flex-start;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 14px 24px;
+        }
+
+        .logo-icon {
+            font-size: 28px;
+            color: var(--accent-color);
+            text-shadow: 0 0 10px var(--accent-color);
+        }
+
+        h1 {
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .subtitle {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Controls Panel */
+        .controls-panel {
+            position: absolute;
+            right: 24px;
+            top: 24px;
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .controls-panel h2 {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 8px;
+        }
+
+        .info-text {
+            font-size: 11px;
+            line-height: 1.5;
+            color: var(--text-secondary);
+            background: rgba(0, 0, 0, 0.15);
+            padding: 10px;
+            border-radius: 8px;
+            border-left: 3px solid var(--accent-color);
+        }
+
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+
+        .val-display {
+            font-family: monospace;
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            cursor: pointer;
+            box-shadow: 0 0 8px var(--accent-color);
+            transition: transform 0.1s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.25);
+        }
+
+        .back-btn {
+            text-decoration: none;
+            color: var(--text-primary);
+            font-size: 12px;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            transition: all 0.3s;
+            display: inline-block;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .back-btn:hover {
+            background: var(--accent-color);
+            color: var(--bg-base);
+            box-shadow: 0 0 10px var(--accent-color);
+        }
+
+        footer.glass-panel {
+            align-self: flex-start;
+            padding: 8px 16px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 768px) {
+            .ui-overlay {
+                display: flex;
+                flex-direction: column;
+                overflow-y: auto;
+                pointer-events: auto;
+                gap: 15px;
+            }
+            .controls-panel {
+                position: static;
+                width: 100%;
+            }
+            header.glass-panel {
+                width: 100%;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="mathCanvas"></canvas>
+
+    <div class="ui-overlay">
+        <!-- Header -->
+        <header class="glass-panel">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span class="logo-icon">🌀</span>
+                <div>
+                    <h1>Fırlanma Animasiyası</h1>
+                    <p class="subtitle">Concentric Alternating Rotation</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Controls -->
+        <aside class="glass-panel controls-panel">
+            <h2>Parametrlər</h2>
+            <div class="info-text">
+                Mərkəz ətrafında əks istiqamətlərdə fırlanan həndəsi xətlər və halqalar.
+            </div>
+
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span>Fırlanma Sürəti</span>
+                    <span class="val-display" id="val-speed">0.02</span>
+                </div>
+                <input type="range" id="param-speed" min="0.005" max="0.08" step="0.005" value="0.02">
+            </div>
+
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span>Halqa Sayı</span>
+                    <span class="val-display" id="val-rings">4</span>
+                </div>
+                <input type="range" id="param-rings" min="2" max="6" step="1" value="4">
+            </div>
+
+            <a href="index.html" class="back-btn">← Portala Qayıt</a>
+        </aside>
+
+        <!-- Footer Help -->
+        <footer class="glass-panel">
+            <span>💡 Əks istiqamətdə fırlanan halqaların yaratdığı optik fırlanma effektini izləyin.</span>
+        </footer>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('mathCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const state = {
+            width: window.innerWidth,
+            height: window.innerHeight,
+            angle: 0
+        };
+
+        function getSliderVal(id) {
+            return parseFloat(document.getElementById(id).value);
+        }
+
+        function setupSlider(sliderId, displayId) {
+            const slider = document.getElementById(sliderId);
+            const display = document.getElementById(displayId);
+            slider.addEventListener('input', () => {
+                display.textContent = slider.value;
+            });
+        }
+
+        setupSlider('param-speed', 'val-speed');
+        setupSlider('param-rings', 'val-rings');
+
+        function resize() {
+            const dpr = window.devicePixelRatio || 1;
+            state.width = window.innerWidth;
+            state.height = window.innerHeight;
+            canvas.width = state.width * dpr;
+            canvas.height = state.height * dpr;
+            ctx.scale(dpr, dpr);
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        function draw() {
+            ctx.fillStyle = 'rgba(6, 6, 12, 0.15)';
+            ctx.fillRect(0, 0, state.width, state.height);
+
+            const cx = state.width / 2;
+            const cy = state.height / 2;
+            const speed = getSliderVal('param-speed');
+            const ringCount = getSliderVal('param-rings');
+
+            state.angle += speed;
+
+            for (let i = 0; i < ringCount; i++) {
+                const radius = 60 + i * 40;
+                // Alternating directions
+                const currentAngle = (i % 2 === 0) ? state.angle : -state.angle;
+
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(currentAngle);
+
+                // Draw segment circle
+                ctx.beginPath();
+                // 3 segments per ring
+                for (let s = 0; s < 3; s++) {
+                    const startAngle = s * (Math.PI * 2 / 3);
+                    const endAngle = startAngle + (Math.PI * 2 / 3) * 0.7; // leave gap
+                    ctx.arc(0, 0, radius, startAngle, endAngle);
+                }
+                
+                ctx.strokeStyle = `hsla(340, 100%, ${55 + i * 8}%, ${0.3 + (1 - i/ringCount) * 0.6})`;
+                ctx.lineWidth = 4;
+                ctx.stroke();
+
+                ctx.restore();
+            }
+
+            requestAnimationFrame(draw);
+        }
+
+        draw();
+    </script>
+</body>
+</html>
